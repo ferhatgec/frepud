@@ -15,6 +15,7 @@
 #   github.com/ferhatgec/totem.py
 
 import os
+import pathlib
 import sys
 import termios
 import tty
@@ -38,19 +39,23 @@ class Totem:
         self.old__ = termios.tcgetattr(sys.stdin.fileno())
         self.new__ = termios.tcgetattr(sys.stdin.fileno())
 
-        with zipfile.ZipFile(filename) as epub:
-            if 'mimetype' in epub.namelist():
-                print(epub.namelist())
-                for file in epub.namelist():
-                    if 'OEBPS/sections' in file:
-                        content = epub.read(file).decode('UTF-8')
-                        spans = re.findall('<span class=\"(?:(span0|span1|span2|span3))\">(.*?)</span>', content)
+        if pathlib.Path(filename).suffix == '.epub':
+            with zipfile.ZipFile(filename) as epub:
+                if 'mimetype' in epub.namelist():
+                    for file in epub.namelist():
+                        if 'OEBPS/sections' in file:
+                            content = epub.read(file).decode('UTF-8')
+                            spans = re.findall('<span class=\"(?:(span0|span1|span2|span3))\">(.*?)</span>', content)
 
-                        for line in spans:
-                            self.file_data += f'{html.unescape(line[1])}\n'
-                            self.__down__ += 1
-            else:
-                print('Invalid e-pub')
+                            for line in spans:
+                                self.file_data += f'{html.unescape(line[1])}\n'
+                                self.__down__ += 1
+                else:
+                    print('Invalid e-pub')
+                    exit(1)
+        else:
+            print('Invalid file extension')
+            exit(1)
 
             self.center()
 
