@@ -159,7 +159,7 @@ class Totem:
 
         print(self.__center(f'{self.title} | {self.author}'),
               self.__center('-' * (len(self.title) + len(self.author) + 3)), sep='\n')
-        print(end=__new)
+        print(end=f'\x1b[0;97m{__new}\x1b[0m')
 
         self.up_to(self.__up__)
 
