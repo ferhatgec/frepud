@@ -39,10 +39,19 @@ class Totem:
         self.old__ = termios.tcgetattr(sys.stdin.fileno())
         self.new__ = termios.tcgetattr(sys.stdin.fileno())
 
+        self.author = ''
+        self.title = ''
+
         if pathlib.Path(filename).suffix == '.epub':
             with zipfile.ZipFile(filename) as epub:
                 if 'mimetype' in epub.namelist():
                     for file in epub.namelist():
+                        if file == 'OEBPS/content.opf':
+                            content = epub.read(file).decode('UTF-8')
+                            self.title = re.search('<dc:title>(.*)</dc:title>', content).group(1)
+                            self.author = re.search('<dc:creator>(.*)</dc:creator>', content).group(1)
+                            continue
+
                         if 'OEBPS/sections' in file:
                             content = epub.read(file).decode('UTF-8')
                             spans = re.findall('<span class=\"(?:(span0|span1|span2|span3))\">(.*?)</span>', content)
@@ -57,9 +66,21 @@ class Totem:
             print('Invalid file extension')
             exit(1)
 
-            self.center()
+        self.center()
 
         self.__full_length__ = self.__down__
+
+    def __center(self, val: str) -> str:
+        data = ''
+        for _ in range(int(self.__w__ / 1.1)):
+            data += ' '
+
+        data += val
+
+        for _ in range(int(self.__w__ / 1.1)):
+            data += ' '
+
+        return data
 
     def center(self):
         if self.file_data is None:
@@ -86,7 +107,7 @@ class Totem:
     def init_buffer(self):
         self.clear()
         self.to_up()
-        self.__down__ = (self.__h__ / 3.5)
+        self.__down__ = (self.__h__ / 3.9)
         self.__from__(False)
         self.disable_cursor()
 
@@ -126,7 +147,7 @@ class Totem:
                 if i >= self.__up__:
                     __new += f'{line}\n'
 
-            i += 1
+                i += 1
         else:
             for line in self.file_data.splitlines():
                 if i < self.__down__:
@@ -135,7 +156,11 @@ class Totem:
                 i += 1
 
         self.clear()
+
+        print(self.__center(f'{self.title} | {self.author}'),
+              self.__center('-' * (len(self.title) + len(self.author) + 3)), sep='\n')
         print(end=__new)
+
         self.up_to(self.__up__)
 
     @staticmethod
